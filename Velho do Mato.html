@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Survival Shooter Mobile</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #111;
+            font-family: Arial, sans-serif;
+            color: white;
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background-color: #222;
+            overflow: hidden;
+        }
+        #player {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #3498db;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .enemy {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #e74c3c;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .bullet {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #f1c40f;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .powerup {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #2ecc71;
+            border-radius: 4px;
+            transform: translate(-50%, -50%);
+        }
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            z-index: 20;
+        }
+        #health-bar {
+            width: 150px;
+            height: 15px;
+            background-color: #333;
+            border: 1px solid #555;
+        }
+        #health-fill {
+            height: 100%;
+            background-color: #2ecc71;
+            transition: width 0.3s;
+            max-width: 100%;
+        }
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #game-over h1 {
+            font-size: 36px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        #restart-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #restart-button:hover {
+            background-color: #2980b9;
+        }
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        #start-screen h1 {
+            font-size: 36px;
+            color: #3498db;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        #start-button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #start-button:hover {
+            background-color: #27ae60;
+        }
+        .weapon-indicator {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 20;
+        }
+        .weapon-icon {
+            width: 30px;
+            height: 30px;
+            background-color: #3498db;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+        }
+        /* Controles touch */
+        #joystick-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            z-index: 30;
+        }
+        #joystick {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 31;
+        }
+        #shoot-button {
+            position: absolute;
+            bottom: 50px;
+            right: 50px;
+            width: 70px;
+            height: 70px;
+            background-color: rgba(231, 76, 60, 0.7);
+            border-radius: 50%;
+            z-index: 30;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+        #instructions {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen">
+            <h1>SURVIVAL SHOOTER</h1>
+            <button id="start-button">INICIAR JOGO</button>
+            <div id="instructions">Use o joystick à esquerda para mover<br>Toque no botão à direita para atirar</div>
+        </div>
+        <div id="player"></div>
+        <div id="hud">
+            <div>
+                <div>Pontos: <span id="score">0</span></div>
+                <div>Nível: <span id="level">1</span></div>
+            </div>
+            <div>
+                <div>Vida:</div>
+                <div id="health-bar">
+                    <div id="health-fill" style="width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="weapon-indicator">
+            <div class="weapon-icon">1</div>
+        </div>
+        <div id="joystick-container">
+            <div id="joystick"></div>
+        </div>
+        <div id="shoot-button">TIRO</div>
+        <div id="game-over">
+            <h1>GAME OVER</h1>
+            <p>Pontuação Final: <span id="final-score">0</span></p>
+            <button id="restart-button">JOGAR NOVAMENTE</button>
+        </div>
+    </div>
+    <script>
+        // Elementos do DOM
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const healthFill = document.getElementById('health-fill');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystick = document.getElementById('joystick');
+        const shootButton = document.getElementById('shoot-button');
+        // Obter tamanho da tela
+        const gameWidth = window.innerWidth;
+        const gameHeight = window.innerHeight;
+        // Configurações do jogo
+        let gameRunning = false;
+        // Estado do jogador
+        let playerState = {
+            x: gameWidth / 2,
+            y: gameHeight / 2,
+            speed: 4,
+            health: 100,
+            score: 0,
+            level: 1,
+            weaponLevel: 1,
+            bulletSpeed: 8,
+            shootCooldown: 300,
+            lastShootTime: 0,
+            moveX: 0,
+            moveY: 0
+        };
+        // Estado dos inimigos
+        let enemies = [];
+        let enemySpawnInterval = null;
+        let enemySpawnRate = 1500;
+        let enemySpeed = 1.5;
+        // Estado das balas
+        let bullets = [];
+        // Estado dos power-ups
+        let powerups = [];
+        let powerupSpawnInterval = null;
+        // Estado do joystick
+        let joystickActive = false;
+        let joystickStartPos = { x: 0, y: 0 };
+        let joystickTouchId = null;
+        // Corrigir problema de scroll e comportamento de toque
+        document.body.addEventListener('touchmove', function(e) {
+            if (e.target === joystickContainer || 
+                e.target === joystick || 
+                e.target === shootButton ||
+                e.target === startButton ||
+                e.target === restartButton) {
+                return;
+            }
+            e.preventDefault();
+        }, { passive: false });
+        // Função de iniciar jogo - tornada mais robusta
+        function startGameHandler(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            startGame();
+            return false;
+        }
+        // Função de reiniciar jogo - tornada mais robusta
+        function restartGameHandler(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            restartGame();
+            return false;
+        }
+        // Adicionar listeners nos botões de forma mais robusta
+        startButton.addEventListener('touchstart', startGameHandler, { passive: false });
+        startButton.addEventListener('click', startGameHandler, { passive: false });
+        restartButton.addEventListener('touchstart', restartGameHandler, { passive: false });
+        restartButton.addEventListener('click', restartGameHandler, { passive: false });
+        // Configuração do joystick
+        joystickContainer.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            joystickActive = true;
+            joystickTouchId = e.touches[0].identifier;
+            const touch = e.touches[0];
+            const rect = joystickContainer.getBoundingClientRect();
+            joystickStartPos.x = rect.left + rect.width / 2;
+            joystickStartPos.y = rect.top + rect.height / 2;
+            updateJoystickPosition(touch.clientX, touch.clientY);
+        }, { passive: false });
+        document.addEventListener('touchmove', function(e) {
+            if (!joystickActive) return;
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === joystickTouchId) {
+                    updateJoystickPosition(e.touches[i].clientX, e.touches[i].clientY);
+                    break;
+                }
+            }
+        }, { passive: true });
+        document.addEventListener('touchend', function(e) {
+            if (!joystickActive) return;
+            let touchFound = false;
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === joystickTouchId) {
+                    touchFound = true;
+                    break;
+                }
+            }
+            if (!touchFound) {
+                resetJoystick();
+            }
+        });
+        document.addEventListener('touchcancel', function(e) {
+            resetJoystick();
+        });
+        // Configuração do botão de tiro
+        shootButton.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            shoot();
+        }, { passive: false });
+        function resetJoystick() {
+            joystickActive = false;
+            joystickTouchId = null;
+            joystick.style.left = '50%';
+            joystick.style.top = '50%';
+            playerState.moveX = 0;
+            playerState.moveY = 0;
+        }
+        function updateJoystickPosition(touchX, touchY) {
+            const rect = joystickContainer.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            // Calcular distância do centro
+            let deltaX = touchX - centerX;
+            let deltaY = touchY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            // Limitar ao raio do joystick
+            const maxRadius = rect.width / 2 - joystick.offsetWidth / 2;
+            if (distance > maxRadius) {
+                deltaX = deltaX * maxRadius / distance;
+                deltaY = deltaY * maxRadius / distance;
+            }
+            // Atualizar posição visual do joystick
+            joystick.style.left = `calc(50% + ${deltaX}px)`;
+            joystick.style.top = `calc(50% + ${deltaY}px)`;
+            // Atualizar valores de movimento (normalizados entre -1 e 1)
+            playerState.moveX = deltaX / maxRadius;
+            playerState.moveY = deltaY / maxRadius;
+        }
+        function startGame() {
+            console.log("Iniciando jogo!"); // Debug
+            // Esconder a tela de início
+            startScreen.style.display = 'none';
+            // Iniciar o estado do jogo
+            gameRunning = true;
+            // Posicionar o jogador no centro
+            player.style.left = `${playerState.x}px`;
+            player.style.top = `${playerState.y}px`;
+            // Iniciar lógica do jogo
+            enemySpawnInterval = setInterval(spawnEnemy, enemySpawnRate);
+            powerupSpawnInterval = setInterval(spawnPowerup, 10000);
+            // Iniciar loop do jogo
+            requestAnimationFrame(gameLoop);
+        }
+        function restartGame() {
+            console.log("Reiniciando jogo!"); // Debug
+            // Resetar estado do jogador
+            playerState = {
+                x: gameWidth / 2,
+                y: gameHeight / 2,
+                speed: 4,
+                health: 100,
+                score: 0,
+                level: 1,
+                weaponLevel: 1,
+                bulletSpeed: 8,
+                shootCooldown: 300,
+                lastShootTime: 0,
+                moveX: 0,
+                moveY: 0
+            };
+            // Limpar inimigos e projéteis
+            enemies = [];
+            bullets = [];
+            powerups = [];
+            // Limpar elementos do DOM
+            document.querySelectorAll('.enemy').forEach(enemy => enemy.remove());
+            document.querySelectorAll('.bullet').forEach(bullet => bullet.remove());
+            document.querySelectorAll('.powerup').forEach(powerup => powerup.remove());
+            // Atualizar UI
+            scoreDisplay.textContent = playerState.score;
+            levelDisplay.textContent = playerState.level;
+            healthFill.style.width = '100%';
+            // Reiniciar temporizadores
+            clearInterval(enemySpawnInterval);
+            clearInterval(powerupSpawnInterval);
+            enemySpawnInterval = setInterval(spawnEnemy, enemySpawnRate);
+            powerupSpawnInterval = setInterval(spawnPowerup, 10000);
+            // Esconder tela de game over
+            gameOverScreen.style.display = 'none';
+            // Reiniciar o jogo
+            gameRunning = true;
+            requestAnimationFrame(gameLoop);
+        }
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+            // Atualizar posição do jogador
+            updatePlayerPosition();
+            // Atualizar posição das balas
+            updateBullets();
+            // Atualizar posição dos inimigos
+            updateEnemies();
+            // Verificar colisões
+            checkCollisions();
+            // Verificar progressão de nível
+            checkLevelProgression();
+            // Continuar o loop do jogo
+            requestAnimationFrame(gameLoop);
+        }
+        function updatePlayerPosition() {
+            // Movimento baseado no joystick
+            if (joystickActive) {
+                playerState.x += playerState.moveX * playerState.speed;
+                playerState.y += playerState.moveY * playerState.speed;
+                // Limitar ao tamanho da tela
+                playerState.x = Math.max(20, Math.min(gameWidth - 20, playerState.x));
+                playerState.y = Math.max(20, Math.min(gameHeight - 20, playerState.y));
+                // Atualizar posição do jogador
+                player.style.left = `${playerState.x}px`;
+                player.style.top = `${playerState.y}px`;
+            }
+        }
+        function shoot() {
+            const currentTime = Date.now();
+            if (currentTime - playerState.lastShootTime < playerState.shootCooldown) {
+                return;
+            }
+            playerState.lastShootTime = currentTime;
+            // Determinar a direção para o tiro automaticamente
+            // Selecionar o inimigo mais próximo como alvo
+            let targetX = playerState.x;
+            let targetY = playerState.y - 100; // Atirar para cima por padrão
+            if (enemies.length > 0) {
+                let closestEnemy = null;
+                let closestDistance = Infinity;
+                for (const enemy of enemies) {
+                    const dx = enemy.x - playerState.x;
+                    const dy = enemy.y - playerState.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < closestDistance) {
+                        closestDistance = distance;
+                        closestEnemy = enemy;
+                    }
+                }
+                if (closestEnemy) {
+                    targetX = closestEnemy.x;
+                    targetY = closestEnemy.y;
+                }
+            }
+            // Calcular direção do tiro
+            const dx = targetX - playerState.x;
+            const dy = targetY - playerState.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const directionX = dx / distance;
+            const directionY = dy / distance;
+            // Criar projétil baseado no nível da arma
+            if (playerState.weaponLevel === 1) {
+                createBullet(playerState.x, playerState.y, directionX, directionY);
+            } else if (playerState.weaponLevel === 2) {
+                createBullet(playerState.x, playerState.y, directionX, directionY);
+                setTimeout(() => {
+                    createBullet(playerState.x, playerState.y, directionX, directionY);
+                }, 100);
+            } else if (playerState.weaponLevel >= 3) {
+                createBullet(playerState.x, playerState.y, directionX, directionY);
+                // Tiros laterais
+                const spreadAngle = 0.3; // Ângulo em radianos
+                createBullet(
+                    playerState.x,
+                    playerState.y,
+                    directionX * Math.cos(spreadAngle) - directionY * Math.sin(spreadAngle),
+                    directionX * Math.sin(spreadAngle) + directionY * Math.cos(spreadAngle)
+                );
+                createBullet(
+                    playerState.x,
+                    playerState.y,
+                    directionX * Math.cos(-spreadAngle) - directionY * Math.sin(-spreadAngle),
+                    directionX * Math.sin(-spreadAngle) + directionY * Math.cos(-spreadAngle)
+                );
+            }
+        }
+        function createBullet(x, y, dirX, dirY) {
+            const bullet = document.createElement('div');
+            bullet.className = 'bullet';
+            bullet.style.left = `${x}px`;
+            bullet.style.top = `${y}px`;
+            gameContainer.appendChild(bullet);
+            bullets.push({
+                element: bullet,
+                x: x,
+                y: y,
+                directionX: dirX,
+                directionY: dirY,
+                speed: playerState.bulletSpeed,
+                damage: 20 + (playerState.weaponLevel * 5)
+            });
+        }
+        function updateBullets() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                // Atualizar posição
+                bullet.x += bullet.directionX * bullet.speed;
+                bullet.y += bullet.directionY * bullet.speed;
+                // Atualizar elemento visual
+                bullet.element.style.left = `${bullet.x}px`;
+                bullet.element.style.top = `${bullet.y}px`;
+                // Verificar se a bala saiu da tela
+                if (
+                    bullet.x < 0 ||
+                    bullet.x > gameWidth ||
+                    bullet.y < 0 ||
+                    bullet.y > gameHeight
+                ) {
+                    bullet.element.remove();
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+        function spawnEnemy() {
+            if (!gameRunning) return;
+            // Determinar posição de spawn (fora da tela)
+            let x, y;
+            const side = Math.floor(Math.random() * 4);
+            switch (side) {
+                case 0: // Topo
+                    x = Math.random() * gameWidth;
+                    y = -20;
+                    break;
+                case 1: // Direita
+                    x = gameWidth + 20;
+                    y = Math.random() * gameHeight;
+                    break;
+                case 2: // Baixo
+                    x = Math.random() * gameWidth;
+                    y = gameHeight + 20;
+                    break;
+                case 3: // Esquerda
+                    x = -20;
+                    y = Math.random() * gameHeight;
+                    break;
+            }
+            // Criar elemento inimigo
+            const enemy = document.createElement('div');
+            enemy.className = 'enemy';
+            enemy.style.left = `${x}px`;
+            enemy.style.top = `${y}px`;
+            gameContainer.appendChild(enemy);
+            // Adicionar ao array de inimigos
+            const health = 25 + (playerState.level * 8);
+            enemies.push({
+                element: enemy,
+                x: x,
+                y: y,
+                health: health,
+                maxHealth: health,
+                damage: 10,
+                speed: enemySpeed + (Math.random() * 0.5)
+            });
+        }
+        function updateEnemies() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                // Calcular direção para o jogador
+                const dx = playerState.x - enemy.x;
+                const dy = playerState.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                // Atualizar posição
+                if (distance > 0) {
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+                // Atualizar elemento visual
+                enemy.element.style.left = `${enemy.x}px`;
+                enemy.element.style.top = `${enemy.y}px`;
+                // Colorir inimigo baseado na saúde
+                const healthPercentage = enemy.health / enemy.maxHealth;
+                const red = Math.floor(231 * healthPercentage + 139 * (1 - healthPercentage));
+                const green = Math.floor(76 * healthPercentage + 0 * (1 - healthPercentage));
+                const blue = Math.floor(60 * healthPercentage + 0 * (1 - healthPercentage));
+                enemy.element.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+            }
+        }
+        function spawnPowerup() {
+            if (!gameRunning) return;
+            // Posição aleatória dentro da tela
+            const x = 50 + Math.random() * (gameWidth - 100);
+            const y = 50 + Math.random() * (gameHeight - 100);
+            // Tipo de power-up aleatório (1: saúde, 2: arma)
+            const type = Math.random() < 0.7 ? 2 : 1;
+            // Criar elemento power-up
+            const powerup = document.createElement('div');
+            powerup.className = 'powerup';
+            powerup.style.left = `${x}px`;
+            powerup.style.top = `${y}px`;
+            // Cor baseada no tipo
+            if (type === 1) {
+                powerup.style.backgroundColor = '#e74c3c'; // Vermelho para saúde
+            } else {
+                powerup.style.backgroundColor = '#f1c40f'; // Amarelo para arma
+            }
+            gameContainer.appendChild(powerup);
+            // Adicionar ao array de power-ups
+            powerups.push({
+                element: powerup,
+                x: x,
+                y: y,
+                type: type
+            });
+            // Fazer o power-up desaparecer após 10 segundos
+            setTimeout(() => {
+                const index = powerups.findIndex(p => p.element === powerup);
+                if (index !== -1) {
+                    powerup.remove();
+                    powerups.splice(index, 1);
+                }
+            }, 10000);
+        }
+        function checkCollisions() {
+            // Verificar colisões entre balas e inimigos
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const enemy = enemies[j];
+                    // Cálculo da distância entre a bala e o inimigo
+                    const dx = bullet.x - enemy.x;
+                    const dy = bullet.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    // Se houver colisão
+                    if (distance < 20) {
+                        enemy.health -= bullet.damage;
+                        // Remover a bala
+                        bullet.element.remove();
+                        bullets.splice(i, 1);
+                        // Verificar se o inimigo foi eliminado
+                        if (enemy.health <= 0) {
+                            enemy.element.remove();
+                            enemies.splice(j, 1);
+                            // Aumentar pontuação
+                            playerState.score += 10 * playerState.level;
+                            scoreDisplay.textContent = playerState.score;
+                        }
+                        break;
+                    }
+                }
+            }
+            // Verificar colisões entre jogador e inimigos
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                // Cálculo da distância entre o jogador e o inimigo
+                const dx = playerState.x - enemy.x;
+                const dy = playerState.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                // Se houver colisão
+                if (distance < 35) {
+                    playerState.health -= enemy.damage * 0.08; // Dano por frame reduzido
+                    // Atualizar barra de vida
+                    healthFill.style.width = `${Math.max(0, playerState.health)}%`;
+                    // Verificar game over
+                    if (playerState.health <= 0) {
+                        gameOver();
+                    }
+                }
+            }
+            // Verificar colisões entre jogador e power-ups
+            for (let i = powerups.length - 1; i >= 0; i--) {
+                const powerup = powerups[i];
+                // Cálculo da distância entre o jogador e o power-up
+                const dx = playerState.x - powerup.x;
+                const dy = playerState.y - powerup.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                // Se houver colisão
+                if (distance < 30) {
+                    // Aplicar efeito baseado no tipo
+                    if (powerup.type === 1) {
+                        // Power-up de saúde
+                        playerState.health = Math.min(100, playerState.health + 30);
+                        healthFill.style.width = `${playerState.health}%`;
+                    } else {
+                        // Power-up de arma
+                        if (playerState.weaponLevel < 3) {
+                            playerState.weaponLevel++;
+                            document.querySelector('.weapon-icon').textContent = playerState.weaponLevel;
+                        }
+                    }
+                    // Remover o power-up
+                    powerup.element.remove();
+                    powerups.splice(i, 1);
+                }
+            }
+        }
+        function checkLevelProgression() {
+            const nextLevelScore = playerState.level * 100;
+            if (playerState.score >= nextLevelScore) {
+                playerState.level++;
+                levelDisplay.textContent = playerState.level;
+                enemySpeed += 0.2;
+                enemySpawnRate = Math.max(800, enemySpawnRate - 200);
+                clearInterval(enemySpawnInterval);
+                enemySpawnInterval = setInterval(spawnEnemy, enemySpawnRate);
+            }
+        }
+        function gameOver() {
+            gameRunning = false;
+            clearInterval(enemySpawnInterval);
+            clearInterval(powerupSpawnInterval);
+            gameOverScreen.style.display = 'flex';
+            finalScoreDisplay.textContent = playerState.score;
+        }
+    </script>
+</body>
+</html>
